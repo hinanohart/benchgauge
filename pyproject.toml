@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "benchgauge"
+version = "0.1.0a1"
+description = "Offline, CPU-only diagnostic for evaluation logs: is this benchmark a measuring instrument that can tell two models apart, and which items are dead weight?"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "hinanohart" }]
+keywords = ["evaluation", "benchmark", "psychometrics", "item-response-theory", "metrology", "llm-eval"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "girth>=0.8",
+  "pyyaml>=6.0",
+]
+# Note: Holm-Bonferroni correction is implemented in-house (rankstability/paired.py)
+# so the core stays torch-free AND statsmodels-free -> lighter, more portable install
+# across py3.10-3.13. statsmodels' BinomialBayesMixedGLM is only relevant to the
+# deferred multi-seed GUM path, not the v0.1.0a1 analytic clustered-SE primary path.
+
+[project.optional-dependencies]
+irt-bayes = ["py-irt>=0.5; python_version < '3.12'"]
+parquet = ["pyarrow>=12.0"]
+dev = ["pytest>=7.0", "ruff>=0.4"]
+all = ["pyarrow>=12.0"]
+
+[project.scripts]
+benchgauge = "benchgauge.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/hinanohart/benchgauge"
+Repository = "https://github.com/hinanohart/benchgauge"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/benchgauge"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

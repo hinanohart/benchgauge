@@ -1,0 +1,5 @@
+{"doc_id": 0, "target": "A", "acc": 1.0, "filtered_resps": ["A"]}
+{"doc_id": 1, "target": "B", "acc": 1.0, "filtered_resps": ["B"]}
+{"doc_id": 2, "target": "C", "acc": 1.0, "filtered_resps": ["C"]}
+{"doc_id": 3, "target": "D", "acc": 0.0, "filtered_resps": ["A"]}
+{"doc_id": 4, "target": "A", "acc": 1.0, "filtered_resps": ["A"]}
