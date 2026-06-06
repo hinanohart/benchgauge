@@ -71,7 +71,7 @@ class LmEvalAdapter:
         if path.is_file():
             return [path] if path.suffix == ".jsonl" else []
         if path.is_dir():
-            return sorted(p for p in path.rglob("*.jsonl") if "samples" in p.name or True)
+            return sorted(path.rglob("*.jsonl"))
         return []
 
     def sniff(self, path: Path) -> bool:

@@ -80,7 +80,7 @@ def item_report(log: EvalLog, backend: IRTBackend | None = None) -> ItemReport:
             irt_backend="none",
             irt_converged=False,
             n_models=n,
-            downgraded="skipped" if n < 15 else "theta_only",
+            downgraded="skipped" if n < 15 else "irt_not_fit",
             detail={"pointbiserial": mis_detail},
         )
 

@@ -102,7 +102,7 @@ class ItemReport:
     irt_backend: str
     irt_converged: bool
     n_models: int
-    downgraded: str | None  # None / "a_flag_suppressed" / "theta_only" / "skipped"
+    downgraded: str | None  # None / "a_flag_suppressed" / "irt_not_fit" / "skipped"
     detail: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
