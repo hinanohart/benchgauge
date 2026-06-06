@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from benchgauge.metrology.cluster import _UF, effective_models
+from benchgauge.metrology.cluster import effective_models
 from benchgauge.model import EvalLog
 from benchgauge.results import DISTINGUISHABLE, INSUFFICIENT, MARGINAL, RESOLVED, ResolutionResult
 
@@ -25,22 +25,39 @@ def resolution(
 ) -> ResolutionResult:
     ids = list(log.model_ids)
     m = len(ids)
-    idx = {mid: i for i, mid in enumerate(ids)}
-    uf = _UF(m)
-    for p in rank_result.pairs:
-        if p.verdict != DISTINGUISHABLE:
-            uf.union(idx[p.a], idx[p.b])
-    groups_idx = uf.groups()
-    # order tiers by mean observed score (descending) for readability
-    means = []
-    for g in groups_idx:
-        vals = log.scores[g][:, :]
-        msk = log.mask[g][:, :]
-        mean = float(vals[msk].mean()) if msk.any() else 0.0
-        means.append(mean)
-    order = np.argsort(means)[::-1]
-    tiers = [[ids[i] for i in groups_idx[o]] for o in order]
-    ndc = len(groups_idx)
+    # mean observed score per model (ascending order = the ability axis)
+    means = np.array(
+        [float(log.scores[i][log.mask[i]].mean()) if log.mask[i].any() else 0.0 for i in range(m)]
+    )
+    order = list(np.argsort(means, kind="stable"))  # low score -> high score
+
+    # statistically distinguishable pairs (Holm-corrected rank verdicts)
+    dist = {frozenset((p.a, p.b)) for p in rank_result.pairs if p.verdict == DISTINGUISHABLE}
+
+    def distinguishable(i: int, j: int) -> bool:
+        return frozenset((ids[i], ids[j])) in dist
+
+    # Greedy sequential tiering up the ability axis: a new tier opens when a
+    # model is statistically distinguishable from the *anchor* (lowest member)
+    # of the current tier. ndc = number of tiers. This counts resolvable steps
+    # and -- unlike connected components of the not-distinguishable graph -- does
+    # NOT collapse to 1 on a smooth continuum of abilities (intransitivity-safe).
+    tiers_idx: list[list[int]] = []
+    if order:
+        anchor = order[0]
+        current = [order[0]]
+        for k in order[1:]:
+            if distinguishable(anchor, k):
+                tiers_idx.append(current)
+                current = [k]
+                anchor = k
+            else:
+                current.append(k)
+        tiers_idx.append(current)
+    ndc = len(tiers_idx)
+
+    # high score -> low score for display
+    tiers = [[ids[i] for i in t] for t in tiers_idx][::-1]
 
     if ndc < fail_under:
         verdict = INSUFFICIENT
@@ -53,7 +70,8 @@ def resolution(
     note = (
         f"ndc={ndc} is relative to this set of {m} models "
         f"(effective {eff['effective_n']} after merging score-corr>{dedup_thresh} near-duplicates). "
-        f"It is a count of statistically separable tiers, not an absolute benchmark quality."
+        f"It counts statistically separable tiers along the ability axis, "
+        f"not an absolute benchmark quality."
     )
     return ResolutionResult(
         ndc=ndc, verdict=verdict, tiers=tiers, effective_n_models=eff["effective_n"], note=note

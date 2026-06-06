@@ -97,7 +97,7 @@ def _load_parquet(path: Path) -> EvalLog:
     scores = np.zeros((len(models), len(items)), dtype=float)
     mask = np.zeros((len(models), len(items)), dtype=bool)
     obs = d.get("observed", [True] * len(d["model"]))
-    for m, it, s, o in zip(d["model"], d["item"], d["score"], obs):
+    for m, it, s, o in zip(d["model"], d["item"], d["score"], obs, strict=True):
         scores[mi[m], ii[it]] = float(s)
         mask[mi[m], ii[it]] = bool(o)
     return EvalLog.from_matrix(

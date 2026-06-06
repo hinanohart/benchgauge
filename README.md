@@ -31,7 +31,7 @@ pip install "benchgauge[parquet]"      # optional parquet I/O (pyarrow)
 ```
 
 The core install is deliberately **torch-free** and **statsmodels-free** so it
-stays light and portable across Python 3.10–3.13.
+stays light and portable. CI covers Python 3.10–3.12 on Linux and Windows.
 
 ## Quickstart
 

@@ -1,0 +1,43 @@
+name: "benchgauge report card"
+description: "Audit an evaluation log: resolution (ndc), rank-stability, and IRT item forensics. Diagnostic only."
+branding:
+  icon: "check-circle"
+  color: "blue"
+inputs:
+  input:
+    description: "Path to an eval log (native JSON/parquet, or an adapter directory)."
+    required: true
+  adapter:
+    description: "Force an adapter (e.g. lm_eval, open_llm_leaderboard)."
+    required: false
+    default: ""
+  fail-under:
+    description: "Exit non-zero if resolution ndc is below this many tiers."
+    required: false
+    default: "2"
+  gate:
+    description: "Run the G1-G8 sensitivity self-tests first (slower)."
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: install benchgauge from this action
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: pip install "$ACTION_PATH"
+    - name: sensitivity gates (optional)
+      if: ${{ inputs.gate == 'true' }}
+      shell: bash
+      run: benchgauge gate
+    - name: report card
+      shell: bash
+      env:
+        BG_INPUT: ${{ inputs.input }}
+        BG_ADAPTER: ${{ inputs.adapter }}
+        BG_FAIL_UNDER: ${{ inputs.fail-under }}
+      run: |
+        args=""
+        if [ -n "$BG_ADAPTER" ]; then args="--adapter $BG_ADAPTER"; fi
+        benchgauge report "$BG_INPUT" $args --fail-under "$BG_FAIL_UNDER"
