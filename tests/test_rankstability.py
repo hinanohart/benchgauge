@@ -57,3 +57,36 @@ def test_full_family_correction_reduces_false_leads():
     log = _synth(rng, thetas=[0.0] * 6, n_items=300)
     res = rank(log)
     assert res.n_established == 0
+
+
+def test_lead_view_orients_margin_to_named_leader():
+    # regression (M1): when the leader is the second model (pair.b), the stored
+    # mean_diff (a - b) is negative; lead_view must present a POSITIVE lead margin
+    # and a CI oriented to the leader, so output never shows "leader wins by -x".
+    log = _synth(np.random.default_rng(7), thetas=[-1.5, 1.5], n_items=400)
+    p = rank(log).pairs[0]
+    assert p.verdict == DISTINGUISHABLE
+    assert p.lead == "m1" == p.b
+    assert p.mean_diff < 0  # internal (a-b) order is negative
+    leader, loser, margin, ci = p.lead_view()
+    assert (leader, loser) == ("m1", "m0")
+    assert margin > 0
+    assert ci[0] > 0 and ci[1] > 0  # CI excludes zero, oriented to the leader
+    # the a-oriented case (leader == pair.a) is returned unchanged
+    p2 = rank(_synth(np.random.default_rng(8), thetas=[1.5, -1.5], n_items=400)).pairs[0]
+    assert p2.lead == "m0" == p2.a
+    leader2, _, margin2, _ = p2.lead_view()
+    assert leader2 == "m0" and margin2 > 0
+
+
+def test_bootstrap_se_tracks_analytic_se():
+    # the SECONDARY paired item-cluster bootstrap SE should track the PRIMARY
+    # analytic clustered SE (operationalizes the otherwise-unexercised estimator).
+    from benchgauge.rankstability.paired import bootstrap_se, pair_stats
+
+    log = _synth(np.random.default_rng(11), thetas=[0.6, -0.6], n_items=400)
+    s = pair_stats(log.scores, log.mask, 0, 1, 0.05)
+    assert s is not None
+    bse = bootstrap_se(log.scores, log.mask, 0, 1, np.random.default_rng(12), n_boot=2000)
+    assert bse is not None
+    assert abs(bse - s["se"]) / s["se"] < 0.15

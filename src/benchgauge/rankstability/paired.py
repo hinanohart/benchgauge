@@ -7,10 +7,10 @@ This automatically accounts for the A-B correlation across items.
 
 Analytic clustered SE is the PRIMARY estimator: Miller shows the CLT applies to
 any finite-variance eval with enough items and that bootstrap is unnecessary.
-A paired item-cluster bootstrap is available as a SECONDARY robustness check
-(small-n / 0-1 saturated regimes); if it disagrees with the analytic SE we warn.
-Holm-Bonferroni controls the family-wise error rate across all C(n,2) pairs and
-is implemented here so the core stays statsmodels-free.
+A paired item-cluster bootstrap (``bootstrap_se``) is provided as an opt-in
+SECONDARY robustness check for small-n / 0-1 saturated regimes; it is not on the
+default ``rank`` path. Holm-Bonferroni controls the family-wise error rate across
+all C(n,2) pairs and is implemented here so the core stays statsmodels-free.
 """
 
 from __future__ import annotations

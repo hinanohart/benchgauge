@@ -21,13 +21,16 @@ __all__ = ["load_evallog", "save_native", "load_native"]
 
 
 def _looks_native_json(path: Path) -> bool:
+    # Parse and inspect the schema_version key rather than substring-matching a
+    # byte window: a foreign JSON that merely contains "evallog/1" early (or a
+    # native log whose keys are reordered) must not be mis-routed.
     if path.suffix != ".json":
         return False
     try:
-        head = path.read_text(encoding="utf-8")[:200]
-    except (OSError, UnicodeDecodeError):
+        obj = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return False
-    return SCHEMA_VERSION in head
+    return isinstance(obj, dict) and str(obj.get("schema_version", "")).startswith("evallog")
 
 
 def load_evallog(path: str | Path, adapter: str | None = None) -> EvalLog:
