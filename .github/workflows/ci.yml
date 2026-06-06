@@ -41,6 +41,19 @@ jobs:
         run: python -c "import importlib.util,sys; sys.exit(0) if importlib.util.find_spec('torch') is None else sys.exit('torch leaked into core')"
       - run: pytest -q
 
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: G1-G8 sensitivity gates (the lifeline)
+        run: benchgauge gate
+
   honest-marketing:
     runs-on: ubuntu-latest
     steps:
