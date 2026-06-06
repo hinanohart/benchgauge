@@ -45,6 +45,9 @@ def load_native(path: str | Path) -> EvalLog:
         raise InputError(
             f"{path} is not a benchgauge native log (schema_version != {SCHEMA_VERSION!r})"
         )
+    missing = {"model_ids", "item_ids", "scores", "mask"} - set(raw)
+    if missing:
+        raise InputError(f"{path} native log is missing required keys: {sorted(missing)}")
     meta = {
         k: ItemMeta(**v) if isinstance(v, dict) else ItemMeta(item_id=k)
         for k, v in raw.get("item_meta", {}).items()

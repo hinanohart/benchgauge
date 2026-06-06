@@ -9,6 +9,7 @@ Dispatch order:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from benchgauge.errors import AbstainError, InputError
@@ -37,7 +38,20 @@ def load_evallog(path: str | Path, adapter: str | None = None) -> EvalLog:
     if adapter is not None:
         return get_adapter(adapter).load(path)
 
-    if _looks_native_json(path) or path.suffix == ".parquet" and _maybe_native_parquet(path):
+    # a .json file is meant to be a native benchgauge log; failing to parse it is
+    # an input error (exit 2), not an abstention (exit 3).
+    if path.is_file() and path.suffix == ".json":
+        if _looks_native_json(path):
+            return load_native(path)
+        try:
+            json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise InputError(f"{path}: not valid JSON ({e})") from e
+        raise InputError(
+            f"{path}: valid JSON but not a benchgauge native log "
+            f"(missing schema_version {SCHEMA_VERSION!r})"
+        )
+    if path.suffix == ".parquet" and _maybe_native_parquet(path):
         return load_native(path)
 
     matches = [a for a in ADAPTERS if a.sniff(path)]

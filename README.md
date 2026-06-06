@@ -41,6 +41,13 @@ Already have an lm-eval run with `--log_samples`? Point benchgauge at it:
 benchgauge report ./lm_eval_outputs --adapter lm_eval
 ```
 
+No eval log handy? Validate your install on synthetic data (no data needed):
+
+```bash
+benchgauge gate          # run the G1–G8 sensitivity self-tests
+benchgauge selfcheck     # quick synthetic recovery demonstration
+```
+
 Or from Python:
 
 ```python

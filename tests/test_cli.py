@@ -46,3 +46,22 @@ def test_convert_round_trip(tmp_path):
     out = tmp_path / "out.json"
     assert main(["convert", str(FIX / "healthy.json"), "--to", str(out)]) == 0
     assert out.exists()
+
+
+def test_native_missing_keys_is_input_error_exit2(tmp_path):
+    # has the schema tag but is missing required keys -> input error, not abstain
+    p = tmp_path / "bad_native.json"
+    p.write_text('{"schema_version":"evallog/1","model_ids":["a"]}', encoding="utf-8")
+    assert main(["rank", str(p)]) == 2
+
+
+def test_non_native_json_is_input_error_exit2(tmp_path):
+    p = tmp_path / "other.json"
+    p.write_text('{"hello":"world"}', encoding="utf-8")
+    assert main(["rank", str(p)]) == 2
+
+
+def test_corrupt_json_is_input_error_exit2(tmp_path):
+    p = tmp_path / "corrupt.json"
+    p.write_text("not json at all {{{", encoding="utf-8")
+    assert main(["rank", str(p)]) == 2

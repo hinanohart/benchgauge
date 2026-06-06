@@ -1,10 +1,10 @@
 """Resolution (ndc): how many distinguishable performance tiers does this
 benchmark carve the model set into?
 
-ndc = number of connected components of the graph whose edges connect models
-that are NOT statistically distinguishable (rank verdict != DISTINGUISHABLE).
-Two models sharing an edge cannot be separated, so they belong to the same tier;
-the number of components is the number of resolvable tiers.
+ndc = number of tiers produced by walking models up the ability axis (by mean
+score) and opening a new tier whenever a model is statistically distinguishable
+(Holm-corrected) from the current tier's anchor. This greedy, deterministic count
+is intransitivity-safe and does not collapse to 1 on a smooth ability continuum.
 
 This is deliberately the circular-reasoning-safe definition: it makes NO
 measurement-repeatability claim and never improves merely by adding items. It is
