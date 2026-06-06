@@ -55,9 +55,10 @@ def _cmd_rank(args) -> int:
         ]
         for p in rr.pairs:
             if p.verdict == "DISTINGUISHABLE":
+                leader, loser, margin, ci = p.lead_view()
                 lines.append(
-                    f"  {p.lead} > {p.b if p.lead == p.a else p.a}  "
-                    f"(diff {p.mean_diff:+.3f}, CI [{p.ci95[0]:+.3f},{p.ci95[1]:+.3f}], "
+                    f"  {leader} > {loser}  "
+                    f"(lead margin {margin:+.3f}, CI [{ci[0]:+.3f},{ci[1]:+.3f}], "
                     f"p_holm={p.p_holm:.3g})"
                 )
         if rr.n_established == 0:
@@ -105,7 +106,8 @@ def _cmd_item(args) -> int:
         lines = [
             f"IRT backend: {ir.irt_backend} (converged={ir.irt_converged}, n_models={ir.n_models})",
             f"dead items (a~0): {len(ir.dead_items)}",
-            f"suspected mislabels (point-biserial<0): {len(ir.suspected_mislabel)}",
+            f"suspected mislabels (point-biserial r<-0.15, one-sided t-test): "
+            f"{len(ir.suspected_mislabel)}",
         ]
         if ir.saturation_theta is not None:
             lines.append(f"SATURATED: information collapses above theta~{ir.saturation_theta:.2f}")

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "benchgauge"
-version = "0.1.0a1"
+version = "0.1.0a3"
 description = "Offline, CPU-only diagnostic for evaluation logs: is this benchmark a measuring instrument that can tell two models apart, and which items are dead weight?"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,7 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 irt-bayes = ["py-irt>=0.5; python_version < '3.12'"]
 parquet = ["pyarrow>=12.0"]
-dev = ["pytest>=7.0", "ruff>=0.4"]
+dev = ["pytest>=7.0", "ruff>=0.4", "ty==0.0.40"]
 all = ["pyarrow>=12.0"]
 
 [project.scripts]

@@ -56,8 +56,10 @@ def resolution(
         tiers_idx.append(current)
     ndc = len(tiers_idx)
 
-    # high score -> low score for display
-    tiers = [[ids[i] for i in t] for t in tiers_idx][::-1]
+    # high score -> low score for display, and within each tier highest mean first
+    tiers = [
+        [ids[i] for i in sorted(t, key=lambda i: float(means[i]), reverse=True)] for t in tiers_idx
+    ][::-1]
 
     if ndc < fail_under:
         verdict = INSUFFICIENT

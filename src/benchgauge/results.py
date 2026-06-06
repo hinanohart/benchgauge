@@ -50,6 +50,20 @@ class RankPair:
             "verdict": self.verdict,
         }
 
+    def lead_view(self) -> tuple[str, str, float, tuple[float, float]]:
+        """``(leader, loser, margin, ci)`` oriented so a positive ``margin``
+        favours the named leader.
+
+        ``mean_diff`` and ``ci95`` are stored in internal ``a - b`` order, but the
+        leader can be either model. Without re-orienting, human-facing output reads
+        "leader wins by a negative margin" whenever ``lead == b``. We negate (and
+        swap the CI bounds) in that case. Meaningful for DISTINGUISHABLE pairs
+        (where ``lead`` is set); otherwise defaults to the ``a`` orientation.
+        """
+        if self.lead == self.b:
+            return self.b, self.a, -self.mean_diff, (-self.ci95[1], -self.ci95[0])
+        return self.a, self.b, self.mean_diff, (self.ci95[0], self.ci95[1])
+
 
 @dataclass(frozen=True)
 class RankResult:

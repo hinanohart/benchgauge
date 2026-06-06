@@ -1,9 +1,11 @@
 """Item-quality forensics: dead items, suspected mislabels, saturation.
 
 - **mislabel** is detected with a point-biserial (leave-one-out item-total)
-  correlation < 0: "the more able models systematically miss this item". This is
-  classical test theory -- numpy only, no IRT needed, backend-independent -- and
-  is therefore the PRIMARY mislabel signal, available even when IRT is skipped.
+  correlation significantly below zero (r < -0.15 confirmed by a one-sided
+  t-test at ``alpha``): "the more able models systematically miss this item".
+  This is classical test theory -- numpy only, no IRT needed, backend-independent
+  -- and is therefore the PRIMARY mislabel signal, available even when IRT is
+  skipped.
   (A negative IRT discrimination is *not* used: girth/py-irt constrain a > 0, so
   "negative a" is dead code.)
 - **dead items** (a ~ 0) and **saturation** (test information collapses at high
@@ -16,7 +18,7 @@ import numpy as np
 from scipy import stats
 
 from benchgauge.irt.backends import IRTBackend
-from benchgauge.irt.fit import fit_irt
+from benchgauge.irt.fit import MIN_MODELS_FOR_IRT, fit_irt
 from benchgauge.model import EvalLog
 from benchgauge.results import ItemReport
 
@@ -71,7 +73,7 @@ def item_report(log: EvalLog, backend: IRTBackend | None = None) -> ItemReport:
     n = log.n_models
     mislabel, mis_detail = mislabel_pointbiserial(log)
 
-    fit = fit_irt(log, backend) if n >= 15 else None
+    fit = fit_irt(log, backend) if n >= MIN_MODELS_FOR_IRT else None
     if fit is None:
         return ItemReport(
             dead_items=[],
@@ -80,7 +82,7 @@ def item_report(log: EvalLog, backend: IRTBackend | None = None) -> ItemReport:
             irt_backend="none",
             irt_converged=False,
             n_models=n,
-            downgraded="skipped" if n < 15 else "irt_not_fit",
+            downgraded="skipped" if n < MIN_MODELS_FOR_IRT else "irt_not_fit",
             detail={"pointbiserial": mis_detail},
         )
 

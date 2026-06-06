@@ -11,7 +11,7 @@ dead weight or look mislabelled. All numbers are either measured from the log
 you pass in or generated from synthetic ground truth (machine-labelled).
 """
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0a3"
 
 from benchgauge.model import EvalLog, ItemMeta  # noqa: E402
 

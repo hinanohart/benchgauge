@@ -37,3 +37,16 @@ def test_synthetic_label_flows_through():
     card = ReportCard.from_evallog(EvalLog.from_matrix(s), synthetic=True)
     assert card.to_json()["labels"]["synthetic"] is True
     assert "synthetic ground truth" in card.to_markdown()
+
+
+def test_markdown_lead_margin_is_positive_for_named_leader():
+    # regression (M1): the rendered rank-stability table must never show the named
+    # leader winning by a non-positive margin.
+    s = synth.scenario_separated(5, np.linspace(-2.0, 2.0, 6))["scores"]
+    md = ReportCard.from_evallog(EvalLog.from_matrix(s), with_irt=False).to_markdown()
+    rows = [ln for ln in md.splitlines() if ln.startswith("| m")]
+    assert rows, "expected at least one established pair row"
+    for ln in rows:
+        cells = [c.strip() for c in ln.strip("|").split("|")]
+        margin = float(cells[2])
+        assert margin > 0, f"leader shown with non-positive margin: {ln}"

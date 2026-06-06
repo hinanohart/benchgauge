@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from benchgauge.errors import AbstainError
+from benchgauge.errors import AbstainError, InputError
 from benchgauge.ingest import load_evallog, load_native, save_native
 from benchgauge.model import EvalLog
 
@@ -63,4 +63,14 @@ def test_abstain_on_unknown(tmp_path):
     p = tmp_path / "mystery.txt"
     p.write_text("not an eval log", encoding="utf-8")
     with pytest.raises(AbstainError):
+        load_evallog(p)
+
+
+def test_foreign_json_mentioning_schema_not_misrouted(tmp_path):
+    # regression (m6): a non-native JSON that merely contains the schema string
+    # must not be parsed as a native log -- it is an input error (exit 2), not a
+    # crash and not an abstain.
+    p = tmp_path / "foreign.json"
+    p.write_text('{"note": "compatible with evallog/1 someday", "x": 1}', encoding="utf-8")
+    with pytest.raises(InputError):
         load_evallog(p)

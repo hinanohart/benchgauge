@@ -64,13 +64,7 @@ class ReportCard:
             "schema_version": SCHEMA_VERSION,
             "input": self.input_summary,
             "metrology": g.resolution.to_dict(),
-            "rank_stability": {
-                "n_models": self.rank.n_models,
-                "n_items": self.rank.n_items,
-                "alpha": self.rank.alpha,
-                "n_established": self.rank.n_established,
-                "pairs": [p.to_dict() for p in self.rank.pairs],
-            },
+            "rank_stability": self.rank.to_dict(),
             "item_quality": item.to_dict() if item else None,
             "labels": {
                 # analytic clustered SE is the default path => deterministic output
@@ -119,14 +113,13 @@ class ReportCard:
         shown = [p for p in self.rank.pairs if p.verdict == "DISTINGUISHABLE"][:8]
         if shown:
             L.append("")
-            L.append("| leader | over | mean diff | 95% CI | p (Holm) |")
+            L.append("| leader | over | lead margin | 95% CI | p (Holm) |")
             L.append("|---|---|---|---|---|")
             for p in shown:
-                lead = p.lead or "-"
-                other = p.b if p.lead == p.a else p.a
+                leader, loser, margin, ci = p.lead_view()
                 L.append(
-                    f"| {lead} | {other} | {p.mean_diff:+.3f} | "
-                    f"[{p.ci95[0]:+.3f}, {p.ci95[1]:+.3f}] | {p.p_holm:.3g} |"
+                    f"| {leader} | {loser} | {margin:+.3f} | "
+                    f"[{ci[0]:+.3f}, {ci[1]:+.3f}] | {p.p_holm:.3g} |"
                 )
         L.append("")
 
