@@ -28,16 +28,16 @@ audited. It is a *diagnostic* tool — it makes **no claim about which model is
 
 ```mermaid
 flowchart TD
-    INPUT[Eval log directory or matrix] --> INGEST[Ingest layer\nlm_eval / native adapter]
-    INGEST --> EVALLOG[EvalLog\nmodels x items matrix]
-    EVALLOG --> RANK[rankstability\nitem-clustered SE + Holm]
-    EVALLOG --> GAUGE[gauge\nresolution ndc tiers]
-    EVALLOG --> IRT[irt forensics\ndifficulty discrimination saturation]
-    RANK --> CARD[ReportCard\nMarkdown + JSON]
+    INPUT[Eval log directory or matrix] --> INGEST[Ingest layer<br>lm_eval / native adapter]
+    INGEST --> EVALLOG[EvalLog<br>models x items matrix]
+    EVALLOG --> RANK[rankstability<br>item-clustered SE + Holm]
+    EVALLOG --> GAUGE[gauge<br>resolution ndc tiers]
+    EVALLOG --> IRT[irt forensics<br>difficulty discrimination saturation]
+    RANK --> CARD[ReportCard<br>Markdown + JSON]
     GAUGE --> CARD
     IRT --> CARD
-    CARD --> CLI[CLI output\nor exit-code contract]
-    GATE[gate G1 to G8\nsynthetic self-tests] --> CLI
+    CARD --> CLI[CLI output<br>or exit-code contract]
+    GATE[gate G1 to G8<br>synthetic self-tests] --> CLI
 ```
 
 ---
