@@ -1,17 +1,15 @@
 # benchgauge
 
-**Is your benchmark a measuring instrument?**
+**Offline, CPU-only diagnostic for evaluation logs — audit your benchmark's resolution and item quality.**
 
-`benchgauge` is an offline, CPU-only, model-agnostic **diagnostic** for evaluation
-logs. You hand it a `models × items` correctness matrix (or point it at an
+`benchgauge` takes a `models × items` correctness matrix (or an
 [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)
-`--log_samples` directory) and it answers two questions a leaderboard number
-never does:
+`--log_samples` directory) and answers two questions a leaderboard number never does:
 
 1. **Resolution** — can this benchmark statistically tell these models apart, and
    into how many distinguishable tiers? (`ndc`)
 2. **Item quality** — which items are dead weight (no discrimination) or look
-   mislabelled (the stronger models systematically miss them)?
+   mislabelled (stronger models systematically miss them)?
 
 It treats a benchmark the way metrology treats a gauge and the way psychometrics
 treats a test: as an instrument whose **resolution and item quality** can be
@@ -21,24 +19,6 @@ audited. It is a *diagnostic* tool — it makes **no claim about which model is
 > Status: `v0.1.0a3` (pre-alpha). All recovery numbers quoted below come from
 > **synthetic ground-truth** experiments (machine-labelled), not from real model
 > runs. Treat the API as unstable.
-
----
-
-## Architecture
-
-```mermaid
-flowchart TD
-    INPUT[Eval log directory or matrix] --> INGEST[Ingest layer<br>lm_eval / native adapter]
-    INGEST --> EVALLOG[EvalLog<br>models x items matrix]
-    EVALLOG --> RANK[rankstability<br>item-clustered SE + Holm]
-    EVALLOG --> GAUGE[gauge<br>resolution ndc tiers]
-    EVALLOG --> IRT[irt forensics<br>difficulty discrimination saturation]
-    RANK --> CARD[ReportCard<br>Markdown + JSON]
-    GAUGE --> CARD
-    IRT --> CARD
-    CARD --> CLI[CLI output<br>or exit-code contract]
-    GATE[gate G1 to G8<br>synthetic self-tests] --> CLI
-```
 
 ---
 
@@ -92,20 +72,39 @@ benchgauge selfcheck       synthetic recovery-rate demonstration
 benchgauge convert INPUT --to OUT.parquet
 ```
 
-**Exit codes:** `0` instrument healthy · `1` unhealthy (low resolution or no
-establishable order — a *diagnostic finding, not a performance claim*) · `2`
-input error · `3` abstain (too few models/items, all-missing, or the model could
-not be fit — we decline to guess).
+**Exit codes:**
+
+| Code | Meaning |
+|------|---------|
+| `0` | Instrument healthy |
+| `1` | Unhealthy — low resolution or no establishable order (a *diagnostic finding, not a performance claim*) |
+| `2` | Input error |
+| `3` | Abstain — too few models/items, all-missing, or model could not be fit (we decline to guess) |
 
 ---
 
 ## The three views
 
-| view | what it tells you | what it never claims |
-|------|-------------------|----------------------|
-| **resolution (ndc)** | how many statistically separable performance tiers this **model set** falls into | absolute benchmark quality; that a sparse/unrepresentative matrix is trustworthy |
-| **rank-stability** | whether `A > B` is significant against item sampling error, with family-wise (Holm) correction | that `A` is a better *model* (out-of-distribution generalisation) |
-| **item quality (IRT)** | for `n_models ≥ 15`, item difficulty / discrimination (dead-item flags active for `n_models ≥ 25`) / saturation under a 1-D ability model | mislabel/contamination detection at small `n`; multi-dimensional ability |
+### Resolution (`ndc`)
+
+How many statistically separable performance tiers this **model set** falls into.
+
+- Uses item-clustered standard errors (paired differences) for conservative, honest tier separation.
+- Does **not** claim absolute benchmark quality or that a sparse/unrepresentative matrix is trustworthy.
+
+### Rank stability
+
+Whether `A > B` is significant against item sampling error, with family-wise (Holm) correction.
+Each pair receives a `DISTINGUISHABLE` / `INDISTINGUISHABLE` / `ABSTAIN` verdict.
+
+- Does **not** claim that `A` is a better *model* in terms of out-of-distribution generalisation.
+
+### Item quality (IRT)
+
+For `n_models ≥ 15`: per-item difficulty and discrimination. Dead-item flags activate at `n_models ≥ 25`.
+Items are flagged as *dead*, *suspected-mislabel*, or *saturated*.
+
+- Does **not** claim mislabel/contamination detection at small `n` or multi-dimensional ability.
 
 ### Honest boundaries
 
@@ -119,6 +118,24 @@ not be fit — we decline to guess).
 - **Numbers are measured or synthetic, and labelled as such.** The report card
   carries `labels.synthetic` and a determinism label; `report` and `gate` contain
   no random placeholders.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    INPUT[Eval log directory or matrix] --> INGEST[Ingest layer<br>lm_eval / native adapter]
+    INGEST --> EVALLOG[EvalLog<br>models x items matrix]
+    EVALLOG --> RANK[rankstability<br>item-clustered SE + Holm]
+    EVALLOG --> GAUGE[gauge<br>resolution ndc tiers]
+    EVALLOG --> IRT[irt forensics<br>difficulty discrimination saturation]
+    RANK --> CARD[ReportCard<br>Markdown + JSON]
+    GAUGE --> CARD
+    IRT --> CARD
+    CARD --> CLI[CLI output<br>or exit-code contract]
+    GATE[gate G1 to G8<br>synthetic self-tests] --> CLI
+```
 
 ---
 
