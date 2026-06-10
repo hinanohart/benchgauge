@@ -18,9 +18,29 @@ treats a test: as an instrument whose **resolution and item quality** can be
 audited. It is a *diagnostic* tool — it makes **no claim about which model is
 "better"** in any absolute sense.
 
-> Status: `v0.1.0a1` (pre-alpha). All recovery numbers quoted below come from
+> Status: `v0.1.0a3` (pre-alpha). All recovery numbers quoted below come from
 > **synthetic ground-truth** experiments (machine-labelled), not from real model
 > runs. Treat the API as unstable.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    INPUT[Eval log directory or matrix] --> INGEST[Ingest layer\nlm_eval / native adapter]
+    INGEST --> EVALLOG[EvalLog\nmodels x items matrix]
+    EVALLOG --> RANK[rankstability\nitem-clustered SE + Holm]
+    EVALLOG --> GAUGE[gauge\nresolution ndc tiers]
+    EVALLOG --> IRT[irt forensics\ndifficulty discrimination saturation]
+    RANK --> CARD[ReportCard\nMarkdown + JSON]
+    GAUGE --> CARD
+    IRT --> CARD
+    CARD --> CLI[CLI output\nor exit-code contract]
+    GATE[gate G1 to G8\nsynthetic self-tests] --> CLI
+```
+
+---
 
 ## Install
 
@@ -32,6 +52,8 @@ pip install "benchgauge[parquet]"      # optional parquet I/O (pyarrow)
 
 The core install is deliberately **torch-free** and **statsmodels-free** so it
 stays light and portable. CI covers Python 3.10–3.12 on Linux and Windows.
+
+---
 
 ## Quickstart
 
@@ -58,7 +80,7 @@ card = ReportCard.from_evallog(log)
 print(card.to_markdown())
 ```
 
-### CLI
+### CLI reference
 
 ```
 benchgauge rank    INPUT   pairwise lead verdicts (item-clustered SE + Holm)
@@ -74,6 +96,8 @@ benchgauge convert INPUT --to OUT.parquet
 establishable order — a *diagnostic finding, not a performance claim*) · `2`
 input error · `3` abstain (too few models/items, all-missing, or the model could
 not be fit — we decline to guess).
+
+---
 
 ## The three views
 
@@ -96,6 +120,51 @@ not be fit — we decline to guess).
   carries `labels.synthetic` and a determinism label; `report` and `gate` contain
   no random placeholders.
 
+---
+
+## How it works
+
+### Ingest
+
+The `ingest` layer reads evaluation logs and normalises them into an `EvalLog`
+object — a `models × items` correctness matrix with associated metadata. Built-in
+adapters handle `lm-evaluation-harness` `--log_samples` output and the
+Open LLM Leaderboard format; a base adapter class makes it straightforward to
+add new sources.
+
+### Resolution (`gauge`)
+
+The `metrology.resolution` module computes `ndc` — the number of statistically
+distinguishable model clusters. It uses item-clustered standard errors (paired
+differences) to account for item-level correlation before performing tier
+separation, giving a conservative and honest answer about how many groups the
+benchmark can actually separate at the chosen α level.
+
+### Rank stability (`rank`)
+
+`rankstability.paired` computes all pairwise score differences with analytic
+item-clustered standard errors (following Miller arXiv:2411.00640). Holm–Bonferroni
+correction is applied in-house (no statsmodels dependency) and each pair receives
+a `DISTINGUISHABLE` / `INDISTINGUISHABLE` / `ABSTAIN` verdict.
+
+### IRT item forensics (`item`)
+
+For matrices with `n_models ≥ 25`, the `irt` module fits a 1-parameter logistic
+model to estimate per-item difficulty and discrimination. Items are then flagged
+as *dead* (near-zero discrimination), *suspected-mislabel* (point-biserial
+correlation below threshold), or *saturated* (ceiling effect). Optional Bayesian
+IRT via `py-irt` is available as `benchgauge[irt-bayes]`.
+
+### Sensitivity gates (`gate`)
+
+`benchgauge gate` runs G1–G8 — a pre-registered suite of synthetic-matrix tests
+that must pass before any real-log analysis is trusted. The gates cover zero
+resolution, high resolution, dead-item recovery, mislabel detection, indistinguishable
+pairs, saturation, small-n robustness, and nominal 95% coverage. Fail-closed: if
+the gates do not pass, real-log paths are blocked.
+
+---
+
 ## How it differs from what exists
 
 This is **operationalisation, not a new statistic.** The underlying methods are
@@ -115,15 +184,7 @@ Modern harnesses (lm-eval) do report standard errors; what benchgauge adds is th
 **clustered/paired SE + a resolution verdict + item forensics, integrated** into
 one report card with an exit-code contract for CI.
 
-## Sensitivity gates (G1–G8) — the lifeline
-
-Before trusting benchgauge on a real log, it must recover **injected** ground
-truth on synthetic matrices `P = sigmoid(a·(θ−b))`, `M ~ Bernoulli(P)`. `benchgauge
-gate` runs the pre-registered G1–G8 suite (zero/high resolution, dead-item,
-mislabel via point-biserial correlation, indistinguishable pair, saturation,
-small-n robustness, and **nominal 95% coverage** ∈ [0.93, 0.97]). If the gates do
-not pass, real-log analysis is blocked fail-closed. This is a structural guard
-against the "pretty figure that distinguishes nothing" failure mode.
+---
 
 ## License
 
