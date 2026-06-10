@@ -157,11 +157,14 @@ IRT via `py-irt` is available as `benchgauge[irt-bayes]`.
 
 ### Sensitivity gates (`gate`)
 
+Before trusting benchgauge on a real log, it must recover **injected** ground
+truth on synthetic matrices `P = sigmoid(a·(θ−b))`, `M ~ Bernoulli(P)`.
 `benchgauge gate` runs G1–G8 — a pre-registered suite of synthetic-matrix tests
 that must pass before any real-log analysis is trusted. The gates cover zero
 resolution, high resolution, dead-item recovery, mislabel detection, indistinguishable
-pairs, saturation, small-n robustness, and nominal 95% coverage. Fail-closed: if
-the gates do not pass, real-log paths are blocked.
+pairs, saturation, small-n robustness, and **nominal 95% coverage** ∈ [0.93, 0.97].
+Fail-closed: if the gates do not pass, real-log paths are blocked. This is a
+structural guard against the "pretty figure that distinguishes nothing" failure mode.
 
 ---
 
