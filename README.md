@@ -105,7 +105,7 @@ not be fit — we decline to guess).
 |------|-------------------|----------------------|
 | **resolution (ndc)** | how many statistically separable performance tiers this **model set** falls into | absolute benchmark quality; that a sparse/unrepresentative matrix is trustworthy |
 | **rank-stability** | whether `A > B` is significant against item sampling error, with family-wise (Holm) correction | that `A` is a better *model* (out-of-distribution generalisation) |
-| **item quality (IRT)** | for `n_models ≥ 25`, item difficulty / discrimination / saturation under a 1-D ability model | mislabel/contamination detection at small `n`; multi-dimensional ability |
+| **item quality (IRT)** | for `n_models ≥ 15`, item difficulty / discrimination (dead-item flags active for `n_models ≥ 25`) / saturation under a 1-D ability model | mislabel/contamination detection at small `n`; multi-dimensional ability |
 
 ### Honest boundaries
 
@@ -149,11 +149,12 @@ a `DISTINGUISHABLE` / `INDISTINGUISHABLE` / `ABSTAIN` verdict.
 
 ### IRT item forensics (`item`)
 
-For matrices with `n_models ≥ 25`, the `irt` module fits a 1-parameter logistic
-model to estimate per-item difficulty and discrimination. Items are then flagged
-as *dead* (near-zero discrimination), *suspected-mislabel* (point-biserial
-correlation below threshold), or *saturated* (ceiling effect). Optional Bayesian
-IRT via `py-irt` is available as `benchgauge[irt-bayes]`.
+For matrices with `n_models ≥ 15`, the `irt` module fits a 2-parameter logistic
+(2PL) model to estimate per-item difficulty and discrimination. Items are then
+flagged as *dead* (near-zero discrimination, reported only when `n_models ≥ 25`
+where the discrimination posterior is reliable), *suspected-mislabel*
+(point-biserial correlation below threshold), or *saturated* (ceiling effect).
+Optional Bayesian IRT via `py-irt` is available as `benchgauge[irt-bayes]`.
 
 ### Sensitivity gates (`gate`)
 
