@@ -1,0 +1,43 @@
+direction: down
+explanation: |md
+  ### benchgauge
+  **Offline, CPU-only diagnostic for evaluation logs — audit your benchmark's resolution and item quality.**
+| {near: top-center}
+
+input: "① Eval log directory\nor models × items matrix" {shape: oval; style: {fill: "#6366f1"; font-color: "#ffffff"; stroke: "#4338ca"; bold: true; font-size: 18}}
+
+ingest: "② Ingest layer\nlm_eval / native adapter" {style: {fill: "#0ea5e9"; font-color: "#ffffff"; stroke: "#0369a1"; bold: true; font-size: 18}}
+
+evallog: "EvalLog\nmodels × items matrix" {style: {fill: "#0ea5e9"; font-color: "#ffffff"; stroke: "#0369a1"; bold: true}}
+
+analysis: "Analysis Engines" {
+  style: {fill: "#f0fdf4"; stroke: "#10b981"; font-color: "#065f46"; bold: true; font-size: 16}
+  rank: "rankstability\nitem-clustered SE + Holm"
+  gauge: "gauge\nresolution ndc tiers"
+  irt: "irt forensics\ndifficulty discrimination saturation"
+  *.style.fill: "#dcfce7"; *.style.font-color: "#065f46"
+}
+
+card: "④ ReportCard\nMarkdown + JSON" {shape: cylinder; style: {fill: "#fdf2f8"; font-color: "#9d174e"; stroke: "#ec4899"; bold: true}}
+
+gate: "gate G1–G8\nsynthetic self-tests" {style: {fill: "#fef3c7"; font-color: "#92400e"; stroke: "#f59e0b"; bold: true}}
+
+cli: "⑤ CLI output\nor exit-code contract" {shape: oval; style: {fill: "#6366f1"; font-color: "#ffffff"; stroke: "#4338ca"; bold: true}}
+
+input -> ingest: "① ingest"
+ingest -> evallog: "② parse"
+evallog -> analysis.rank: "③ analyze"
+evallog -> analysis.gauge: "③ analyze"
+evallog -> analysis.irt: "③ analyze"
+analysis.rank -> card: "④ report"
+analysis.gauge -> card: "④ report"
+analysis.irt -> card: "④ report"
+gate -> cli: "⑤ self-test"
+card -> cli: "⑤ emit"
+
+legend: "Legend" {
+  near: bottom-center
+  style: {fill: "#f8fafc"; stroke: "#cbd5e1"; font-size: 13}
+  e: "● entry/CLI"; c: "● core/engine"; p: "● analysis"; b: "● gate"; d: "● output"
+  e.style.font-color: "#4338ca"; c.style.font-color: "#0369a1"; p.style.font-color: "#10b981"; b.style.font-color: "#f59e0b"; d.style.font-color: "#ec4899"
+}

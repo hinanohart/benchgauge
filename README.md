@@ -123,19 +123,9 @@ Items are flagged as *dead*, *suspected-mislabel*, or *saturated*.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    INPUT[Eval log directory or matrix] --> INGEST[Ingest layer<br>lm_eval / native adapter]
-    INGEST --> EVALLOG[EvalLog<br>models x items matrix]
-    EVALLOG --> RANK[rankstability<br>item-clustered SE + Holm]
-    EVALLOG --> GAUGE[gauge<br>resolution ndc tiers]
-    EVALLOG --> IRT[irt forensics<br>difficulty discrimination saturation]
-    RANK --> CARD[ReportCard<br>Markdown + JSON]
-    GAUGE --> CARD
-    IRT --> CARD
-    CARD --> CLI[CLI output<br>or exit-code contract]
-    GATE[gate G1 to G8<br>synthetic self-tests] --> CLI
-```
+<div align="center">
+  <img src="docs/architecture.png" alt="benchgauge architecture" width="840">
+</div>
 
 ---
 
@@ -210,3 +200,4 @@ one report card with an exit-code contract for CI.
 ## License
 
 MIT © hinanohart. Contributions welcome — see `CONTRIBUTING.md`.
+
